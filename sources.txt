@@ -1,0 +1,13 @@
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\ImageCopier.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\BaseHero.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\Hero.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\HeroDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\SkyRumServer.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\combat\CombatSimulator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\BowDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\DragonArmorDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\EnchantedSwordDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\FireEnchantDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\IronArmorDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\SpeedBuffDecorator.java
+c:\Users\Gabriel\Desktop\Tareas\PatronesSW\PatronDecorator\skyrum\decorators\SwordDecorator.java
