@@ -24,21 +24,24 @@ public class SkyRumServer {
         int port = 8080;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", new SkyRumHandler());
-        server.createContext("/images", new StaticImageHandler());
-        server.setExecutor(null); // crea un executor por defecto
+        server.createContext("/images", new StaticFileHandler("images", "image/png"));
+        server.createContext("/audio", new StaticFileHandler("audio", "audio/mpeg"));
+        server.setExecutor(null);
         server.start();
         System.out.println("SkyRum Server iniciado en http://localhost:" + port);
-        System.out.println("Abre ese enlace en tu navegador para probar el simulador.");
     }
 
-    static class StaticImageHandler implements HttpHandler {
+    static class StaticFileHandler implements HttpHandler {
+        private String dir;
+        private String contentType;
+        public StaticFileHandler(String dir, String contentType) { this.dir = dir; this.contentType = contentType; }
         @Override
         public void handle(HttpExchange t) throws IOException {
-            String path = t.getRequestURI().getPath(); // Ej: /images/ragnar.png
+            String path = t.getRequestURI().getPath();
             String fileName = path.substring(path.lastIndexOf("/") + 1);
-            java.io.File file = new java.io.File("images/" + fileName);
+            java.io.File file = new java.io.File(dir + "/" + fileName);
             if (file.exists()) {
-                t.getResponseHeaders().set("Content-Type", "image/png");
+                t.getResponseHeaders().set("Content-Type", contentType);
                 t.sendResponseHeaders(200, file.length());
                 OutputStream os = t.getResponseBody();
                 java.nio.file.Files.copy(file.toPath(), os);
@@ -54,50 +57,36 @@ public class SkyRumServer {
         public void handle(HttpExchange t) throws IOException {
             String query = t.getRequestURI().getQuery();
             
-            // Creamos nuestro héroe base original (Componente Concreto)
             Hero hero = new BaseHero();
             boolean showCombat = false;
+            int level = 1;
             
             if (query != null && !query.isEmpty()) {
-                showCombat = true;
                 Map<String, String> params = parseQuery(query);
                 
-                // Aquí usamos el PATRÓN DECORATOR.
-                // Envolvemos el objeto "hero" repetidas veces según la selección.
-                // Cada vez, el nuevo decorador guarda la referencia del héroe anterior.
-                // Esto permite apilar estadísticas y comportamiento de manera dinámica.
-                
                 if (params.containsKey("weapon")) {
+                    showCombat = true;
                     String weapon = params.get("weapon");
-                    if (weapon.equals("sword")) {
-                        hero = new SwordDecorator(hero); // Envuelve al héroe con la Espada
-                    } else if (weapon.equals("enchanted_sword")) {
-                        hero = new EnchantedSwordDecorator(hero);
-                    } else if (weapon.equals("bow")) {
-                        hero = new BowDecorator(hero);
-                    }
+                    if (weapon.equals("sword")) hero = new SwordDecorator(hero); 
+                    else if (weapon.equals("enchanted_sword")) hero = new EnchantedSwordDecorator(hero);
+                    else if (weapon.equals("bow")) hero = new BowDecorator(hero);
                 }
                 
                 if (params.containsKey("armor")) {
                     String armor = params.get("armor");
-                    if (armor.equals("iron")) {
-                        hero = new IronArmorDecorator(hero); // Envuelve con Armadura de Hierro
-                    } else if (armor.equals("dragon")) {
-                        hero = new DragonArmorDecorator(hero);
-                    }
+                    if (armor.equals("iron")) hero = new IronArmorDecorator(hero); 
+                    else if (armor.equals("dragon")) hero = new DragonArmorDecorator(hero);
                 }
                 
-                // Estos funcionan como Checkboxes (múltiples selecciones posibles)
-                if (params.containsKey("fire")) {
-                    hero = new FireEnchantDecorator(hero);
-                }
-                if (params.containsKey("speed")) {
-                    hero = new SpeedBuffDecorator(hero);
+                if (params.containsKey("fire")) hero = new FireEnchantDecorator(hero);
+                if (params.containsKey("speed")) hero = new SpeedBuffDecorator(hero);
+                
+                if (params.containsKey("level")) {
+                    try { level = Integer.parseInt(params.get("level")); } catch(Exception e) {}
                 }
             }
 
-            // Generamos la respuesta HTML
-            String html = generateHTML(hero, showCombat);
+            String html = generateHTML(hero, showCombat, level);
             byte[] bytesResponse = html.getBytes(StandardCharsets.UTF_8);
             
             t.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
@@ -120,7 +109,7 @@ public class SkyRumServer {
             return result;
         }
 
-        private String generateHTML(Hero hero, boolean showCombat) {
+        private String generateHTML(Hero hero, boolean showCombat, int level) {
             StringBuilder sb = new StringBuilder();
             sb.append("<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><title>SkyRum - RPG Experience</title>");
             sb.append("<style>");
@@ -152,52 +141,103 @@ public class SkyRumServer {
             
             sb.append("<h1>SkyRum 🐉</h1>");
             
-            // Top Panel: Story
-            sb.append("<div class='quest-panel'>");
+            sb.append("<audio id='bgm' loop><source src='/audio/ambient.mp3' type='audio/mpeg'></audio>");
+            sb.append("<audio id='sfx-victory'><source src='/audio/victory.mp3' type='audio/mpeg'></audio>");
+            sb.append("<audio id='sfx-defeat'><source src='/audio/defeat.mp3' type='audio/mpeg'></audio>");
+            
+            sb.append("<div class='audio-control' onclick='toggleAudio()' id='music-btn'>🔈 MÚSICA: OFF</div>");
+
+            sb.append("<div class='header-container'>");
+            sb.append("<h1 class='title-main'>SKYRUM</h1>");
+            sb.append("<div class='title-line' id='t-line'></div>");
+            sb.append("<div class='title-sub'>Crónicas del Norte</div>");
+            sb.append("</div>");
+            
+            String narrative = "\"Ragnar, las bestias de SkyRum han despertado. Equípate sabiamente y demuestra tu poder.\"";
+            if (level == 2) narrative = "\"Los gigantes han despertado… algo oscuro se mueve en las montañas de SkyRum.\"";
+            else if (level == 3) narrative = "\"Los dragones han vuelto a los cielos de SkyRum. El fin se acerca, Ragnar.\"";
+            else if (level >= 4) narrative = "\"El Señor Dragón gobierna los cielos. Esta batalla decidirá el destino del reino.\"";
+
+            sb.append("<div class='quest-panel' id='q-panel'>");
             sb.append("<img src='/images/crowley.png' alt='Crowley'>");
-            sb.append("<div class='quest-dialog'>\"Ragnar, the beasts of SkyRum have awakened.<br>Choose your equipment wisely and prove your strength.\"</div>");
+            sb.append("<div class='quest-dialog' id='n-text'>").append(narrative).append("</div>");
             sb.append("</div>");
             
             sb.append("<div class='container'>");
             
-            // Left Panel: Form
-            sb.append("<div class='panel'>");
-            sb.append("<h2>Equip Ragnar</h2>");
-            
-            // Imagen de Ragnar
-            sb.append("<img src='/images/ragnar.png' alt='Ragnar' class='character-img'>");
+            sb.append("<div class='panel' id='p-inv'>");
+            sb.append("<h2>Equipa a Ragnar</h2>");
+            sb.append("<div style='text-align: center;'><img src='/images/ragnar.png' style='width: 250px; border: 2px solid #5a4f32; margin-bottom: 25px;'></div>");
             
             sb.append("<form method='GET' action='/'>");
+            sb.append("<input type='hidden' name='level' value='").append(showCombat ? level + 1 : level).append("'>");
             
-            sb.append("<h3>⚔️ Weapons</h3>");
-            sb.append("<label><input type='radio' name='weapon' value='none' checked> None (Fists)</label>");
-            sb.append("<label><input type='radio' name='weapon' value='sword'> Sword (+10 Attack)</label>");
-            sb.append("<label><input type='radio' name='weapon' value='enchanted_sword'> Enchanted Sword (+20 Attack)</label>");
-            sb.append("<label><input type='radio' name='weapon' value='bow'> Bow (+8 Attack, +5 Speed)</label>");
+            sb.append("<h3>⚔️ Armas</h3>");
+            sb.append("<label class='inventory-label shadow'><span>Ninguna (Puños)</span><input type='radio' name='weapon' value='none' checked></label>");
+            sb.append("<label class='inventory-label shadow'><span>Espada de Hierro (+10 Atk)</span><input type='radio' name='weapon' value='sword'></label>");
+            sb.append("<label class='inventory-label shadow'><span>Espada Encantada (+20 Atk)</span><input type='radio' name='weapon' value='enchanted_sword'></label>");
+            sb.append("<label class='inventory-label shadow'><span>Arco Élfico (+8 Atk, +5 Spd)</span><input type='radio' name='weapon' value='bow'></label>");
             
-            sb.append("<h3>🛡️ Armor</h3>");
-            sb.append("<label><input type='radio' name='armor' value='none' checked> Normal Clothes</label>");
-            sb.append("<label><input type='radio' name='armor' value='iron'> Iron Armor (+15 Defense)</label>");
-            sb.append("<label><input type='radio' name='armor' value='dragon'> Dragon Armor (+25 Defense)</label>");
+            sb.append("<h3>🛡️ Armadura</h3>");
+            sb.append("<label class='inventory-label shadow'><span>Ropa de Aldeano</span><input type='radio' name='armor' value='none' checked></label>");
+            sb.append("<label class='inventory-label shadow'><span>Armadura de Hierro (+15 Def)</span><input type='radio' name='armor' value='iron'></label>");
+            sb.append("<label class='inventory-label shadow'><span>Escamas de Dragón (+25 Def)</span><input type='radio' name='armor' value='dragon'></label>");
             
-            sb.append("<h3>✨ Magic / Buffs</h3>");
-            sb.append("<label><input type='checkbox' name='fire' value='on'> Fire Enchantment (+10 Attack)</label>");
-            sb.append("<label><input type='checkbox' name='speed' value='on'> Speed Blessing (+10 Speed)</label>");
+            sb.append("<h3>✨ Magia / Bendiciones</h3>");
+            sb.append("<label class='inventory-label shadow'><span>Encantamiento de Fuego (+10 Atk)</span><input type='checkbox' name='fire' value='on'></label>");
+            sb.append("<label class='inventory-label shadow'><span>Bendición de Velocidad (+10 Spd)</span><input type='checkbox' name='speed' value='on'></label>");
             
-            sb.append("<button type='submit'>Forge Hero and Enter Battle</button>");
+            sb.append("<button type='submit'>Forjar héroe y entrar en batalla</button>");
             sb.append("</form>");
             sb.append("</div>");
             
-            // Right Panel: Results
             if (showCombat) {
-                sb.append("<div class='panel result-panel'>");
-                sb.append(CombatSimulator.simulate(hero));
+                sb.append("<div class='panel' id='p-combat'>");
+                sb.append(CombatSimulator.simulate(hero, level)); // Pass level to CombatSimulator
                 sb.append("</div>");
             }
+            sb.append("</div>");
+
+            sb.append("<script>");
+            sb.append("function toggleAudio() {");
+            sb.append("  const bgm = document.getElementById('bgm');");
+            sb.append("  const btn = document.getElementById('music-btn');");
+            sb.append("  if (bgm.paused) { bgm.play(); btn.innerText = '🔊 MÚSICA: ON'; }");
+            sb.append("  else { bgm.pause(); btn.innerText = '🔈 MÚSICA: OFF'; }");
+            sb.append("}");
+            sb.append("function playVictory() { document.getElementById('sfx-victory').play(); }");
+            sb.append("function playDefeat() { document.getElementById('sfx-defeat').play(); }");
+
+            sb.append("window.onload = () => {");
+            sb.append("  const tl = gsap.timeline();");
+            sb.append("  tl.to('.title-main', { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' })");
+            sb.append("    .to('#t-line', { width: '80%', duration: 1 }, '-=0.8')");
+            sb.append("    .to('.title-sub', { opacity: 1, duration: 1 }, '-=0.6')");
+            sb.append("    .to('#q-panel', { autoAlpha: 1, y: 0, duration: 1 }, '-=0.5')");
+            sb.append("    .to('#p-inv', { autoAlpha: 1, duration: 1 }, '-=0.6');");
             
-            sb.append("</div>"); // end container
+            if (showCombat) {
+                sb.append("  tl.to('#p-combat', { autoAlpha: 1, duration: 1 }, '-=0.7')");
+                sb.append("    .to('.enemy-img', { scale: 1, duration: 1, ease: 'back.out(1.7)' })");
+                sb.append("    .to('.synergy-badge, .weakness-badge', { opacity: 1, x: 0, stagger: 0.2 })");
+                sb.append("    .to('.stat-fill', { width: (i, el) => el.style.width, duration: 1.5, stagger: 0.3, ease: 'power2.out' })");
+                sb.append("    .to('.combat-msg', { opacity: 1, scale: 1, duration: 0.8, ease: 'elastic.out(1, 0.5)' });");
+            }
+
+            sb.append("  document.querySelectorAll('.inventory-label').forEach(label => {");
+            sb.append("    label.addEventListener('click', () => {");
+            sb.append("      const group = label.querySelector('input').name;");
+            sb.append("      if(label.querySelector('input').type === 'radio') {");
+            sb.append("        document.querySelectorAll('input[name='+group+']').forEach(i => i.parentNode.classList.remove('active'));");
+            sb.append("      }");
+            sb.append("      label.classList.toggle('active');");
+            sb.append("      gsap.fromTo(label, { scale: 1 }, { scale: 1.04, duration: 0.1, yoyo: true, repeat: 1 });");
+            sb.append("    });");
+            sb.append("  });");
+            sb.append("};");
+            sb.append("</script>");
+            
             sb.append("</body></html>");
-            
             return sb.toString();
         }
     }

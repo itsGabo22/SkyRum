@@ -34,17 +34,17 @@ public class SynergySystem {
         
         if (hasSword && hasFire) {
             result.extraAttack += 20;
-            result.synergyMessages += "<p class='synergy-text'>✨ SYNERGY ACTIVATED: Flaming Blade! (+20 Attack)</p>\n";
+            result.synergyMessages += "<p class='synergy-text'>✨ SINERGIA ACTIVADA: ¡Hoja Ígnea! (+20 Ataque)</p>\n";
         }
         if (hasBow && hasSpeed) {
             result.extraSpeed += 20;
-            result.synergyMessages += "<p class='synergy-text'>✨ SYNERGY ACTIVATED: Phantom Archer! (+20 Speed)</p>\n";
+            result.synergyMessages += "<p class='synergy-text'>✨ SINERGIA ACTIVADA: ¡Arquero Fantasma! (+20 Velocidad)</p>\n";
         }
         if (hasEnchantedSword && hasDragonArmor) {
             // El bono se activa solo contra dragones
             if (enemy.name.equals("Dragón")) {
                 result.extraAttack += 30;
-                result.synergyMessages += "<p class='synergy-text'>✨ SYNERGY ACTIVATED: Dragon Slayer! (+30 extra attack against dragons)</p>\n";
+                result.synergyMessages += "<p class='synergy-text'>✨ SINERGIA ACTIVADA: ¡Cazador de Dragones! (+30 ataque extra contra dragones)</p>\n";
             }
         }
 
@@ -52,15 +52,15 @@ public class SynergySystem {
         
         if (enemy.name.equals("Dragón") && hasBow) {
             result.extraAttack += 20;
-            result.weaknessMessages += "<p class='weakness-text'>🔥 Enemy weakness exploited (Bow vs Dragon)! (+20 Attack)</p>\n";
+            result.weaknessMessages += "<p class='weakness-text'>🔥 ¡Debilidad explotada! (Arco contra Dragón) (+20 Ataque)</p>\n";
         }
         if (enemy.name.equals("Gigante") && hasSword) {
             result.extraAttack += 15;
-            result.weaknessMessages += "<p class='weakness-text'>🔥 Enemy weakness exploited (Sword vs Giant)! (+15 Attack)</p>\n";
+            result.weaknessMessages += "<p class='weakness-text'>🔥 ¡Debilidad explotada! (Espada contra Gigante) (+15 Ataque)</p>\n";
         }
         if (enemy.name.equals("Bandido") && hasFire) {
             result.extraAttack += 15;
-            result.weaknessMessages += "<p class='weakness-text'>🔥 Enemy weakness exploited (Fire Enchantment vs Bandit)! (+15 Attack)</p>\n";
+            result.weaknessMessages += "<p class='weakness-text'>🔥 ¡Debilidad explotada! (Encantamiento de Fuego contra Bandido) (+15 Ataque)</p>\n";
         }
 
         return result;

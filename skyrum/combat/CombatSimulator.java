@@ -33,9 +33,10 @@ public class CombatSimulator {
 
     /**
      * @param hero El héroe ya decorado (creado con el patrón Decorator).
+     * @param level El nivel actual del jugador para escalar la narrativa.
      * @return Una cadena en HTML con los resultados de combate con barras de stats y estilo RPG.
      */
-    public static String simulate(Hero hero) {
+    public static String simulate(Hero hero, int level) {
         StringBuilder sb = new StringBuilder();
         
         // 1. Encontrar enemigo
@@ -53,12 +54,12 @@ public class CombatSimulator {
         if (enemy.name.equals("Dragón")) enemyImg = "dragon.png";
         else if (enemy.name.equals("Gigante")) enemyImg = "giant.png";
         
-        sb.append("<h2>Battle Analysis</h2>");
+        sb.append("<h2>Análisis del Combate</h2>");
         
         // Enemy Portrait
-        sb.append("<div style='text-align: center;'>");
+        sb.append("<div style='text-align: center;' id='enemy-panel'>");
         sb.append("<img src='/images/").append(enemyImg).append("' alt='").append(enemy.name).append("' class='enemy-img'>");
-        sb.append("<p class='enemy-stats'>").append(enemy.name).append(" (Level 50 Boss)</p>");
+        sb.append("<p class='enemy-stats'>").append(enemy.name).append(" (Jefe Nivel 50)</p>");
         sb.append("</div>");
         
         // Synergy/Weakness Badges
@@ -67,26 +68,32 @@ public class CombatSimulator {
                 .replace("<p class='synergy-text'>", "<div class='synergy-badge'>")
                 .replace("<p class='weakness-text'>", "<div class='weakness-badge'>")
                 .replace("</p>", "</div>");
-            sb.append(combined);
+            sb.append("<div id='bonuses-area'>").append(combined).append("</div>");
         }
         
-        sb.append("<h3>Final Attributes</h3>");
+        sb.append("<h3>Atributos Finales</h3>");
         sb.append("<p class='hero-desc' style='font-size: 0.9em;'>").append(hero.getDescription()).append("</p>");
         
         // Stat Bars
-        addStatBar(sb, "ATTACK", finalAttack, 70, "atk-fill");
-        addStatBar(sb, "DEFENSE", finalDefense, 70, "def-fill");
-        addStatBar(sb, "SPEED", finalSpeed, 70, "spd-fill");
+        sb.append("<div id='stats-bars'>");
+        addStatBar(sb, "ATAQUE", finalAttack, 70, "atk-fill");
+        addStatBar(sb, "DEFENSA", finalDefense, 70, "def-fill");
+        addStatBar(sb, "VELOCIDAD", finalSpeed, 70, "spd-fill");
+        sb.append("</div>");
         
         // Combat logic
         int heroScore = finalAttack + finalDefense + finalSpeed;
         int enemyScore = enemy.attack + enemy.defense + enemy.speed;
         
+        sb.append("<div id='combat-result-msg'>");
         if (heroScore >= enemyScore) {
-            sb.append("<div class='combat-msg msg-victory'>VICTORY: Ragnar has triumphed!</div>");
+            sb.append("<div class='combat-msg msg-victory'>¡VICTORIA: Ragnar ha triunfado!</div>");
+            sb.append("<script>playVictory();</script>");
         } else {
-            sb.append("<div class='combat-msg msg-defeat'>DEFEAT: Ragnar has fallen...</div>");
+            sb.append("<div class='combat-msg msg-defeat'>DERROTA: Ragnar ha caído...</div>");
+            sb.append("<script>playDefeat();</script>");
         }
+        sb.append("</div>");
 
         return sb.toString();
     }
