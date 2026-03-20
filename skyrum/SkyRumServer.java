@@ -139,11 +139,7 @@ public class SkyRumServer {
             sb.append(".hero-desc { font-family: 'MedievalSharp', cursive; color: #ecf0f1; font-size: 1.2em; line-height: 1.4; margin-bottom: 15px;}");
             sb.append("</style></head><body>");
             
-            sb.append("<h1>SkyRum 🐉</h1>");
-            
-            sb.append("<audio id='bgm' loop><source src='/audio/ambient.mp3' type='audio/mpeg'></audio>");
-            sb.append("<audio id='sfx-victory'><source src='/audio/victory.mp3' type='audio/mpeg'></audio>");
-            sb.append("<audio id='sfx-defeat'><source src='/audio/defeat.mp3' type='audio/mpeg'></audio>");
+            sb.append("<body>");
             
             sb.append("<div class='audio-control' onclick='toggleAudio()' id='music-btn'>🔈 MÚSICA: OFF</div>");
 
@@ -237,6 +233,9 @@ public class SkyRumServer {
             sb.append("};");
             sb.append("</script>");
             
+            sb.append("<audio id='bgm' loop><source src='/audio/ambient.mp3' type='audio/mpeg'></audio>");
+            sb.append("<audio id='sfx-victory'><source src='/audio/victory.mp3' type='audio/mpeg'></audio>");
+            sb.append("<audio id='sfx-defeat'><source src='/audio/defeat.mp3' type='audio/mpeg'></audio>");
             sb.append("</body></html>");
             return sb.toString();
         }
