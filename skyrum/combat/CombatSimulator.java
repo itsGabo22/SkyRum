@@ -33,49 +33,69 @@ public class CombatSimulator {
 
     /**
      * @param hero El héroe ya decorado (creado con el patrón Decorator).
-     * @return Una cadena en HTML con los resultados del combate.
+     * @return Una cadena en HTML con los resultados de combate con barras de stats y estilo RPG.
      */
     public static String simulate(Hero hero) {
         StringBuilder sb = new StringBuilder();
         
-        // 1. Mostrar las estadísticas finales de Ragnar
-        sb.append("<h3>Estadísticas Finales de Ragnar</h3>");
-        sb.append("<p><b>Descripción:</b> ").append(hero.getDescription()).append("</p>");
-        sb.append("<p><b>Ataque:</b> ").append(hero.getAttack()).append("</p>");
-        sb.append("<p><b>Defensa:</b> ").append(hero.getDefense()).append("</p>");
-        sb.append("<p><b>Velocidad:</b> ").append(hero.getSpeed()).append("</p>");
-        
-        // 2. Generar enemigo aleatorio
+        // 1. Encontrar enemigo
         Random rand = new Random();
         Enemy enemy = ENEMIES[rand.nextInt(ENEMIES.length)];
         
-        sb.append("<h3>Enemigo Encontrado</h3>");
+        // 2. Mecánicas complejas
+        SynergySystem.SynergyResult bonuses = SynergySystem.calculateBonuses(hero, enemy);
+        
+        int finalAttack = hero.getAttack() + bonuses.extraAttack;
+        int finalDefense = hero.getDefense() + bonuses.extraDefense;
+        int finalSpeed = hero.getSpeed() + bonuses.extraSpeed;
         
         String enemyImg = "bandit.png";
         if (enemy.name.equals("Dragón")) enemyImg = "dragon.png";
         else if (enemy.name.equals("Gigante")) enemyImg = "giant.png";
         
+        sb.append("<h2>Battle Analysis</h2>");
+        
+        // Enemy Portrait
         sb.append("<div style='text-align: center;'>");
-        sb.append("<img src='/images/").append(enemyImg).append("' alt='").append(enemy.name).append("' style='width: 150px; height: 150px; object-fit: cover; border-radius: 10px; border: 2px solid #e74c3c; margin: 10px 0;'>");
+        sb.append("<img src='/images/").append(enemyImg).append("' alt='").append(enemy.name).append("' class='enemy-img'>");
+        sb.append("<p class='enemy-stats'>").append(enemy.name).append(" (Level 50 Boss)</p>");
         sb.append("</div>");
         
-        sb.append("<p>¡Un <b>").append(enemy.name).append("</b> salvaje aparece!</p>");
-        sb.append("<p>(Ataque: ").append(enemy.attack)
-          .append(", Defensa: ").append(enemy.defense)
-          .append(", Velocidad: ").append(enemy.speed).append(")</p>");
-          
-        sb.append("<h3>Resultado del Combate</h3>");
+        // Synergy/Weakness Badges
+        if (!bonuses.synergyMessages.isEmpty() || !bonuses.weaknessMessages.isEmpty()) {
+            String combined = (bonuses.synergyMessages + bonuses.weaknessMessages)
+                .replace("<p class='synergy-text'>", "<div class='synergy-badge'>")
+                .replace("<p class='weakness-text'>", "<div class='weakness-badge'>")
+                .replace("</p>", "</div>");
+            sb.append(combined);
+        }
         
-        // 3. Sistema súper simplificado de combate comparando la suma de stats
-        int heroScore = hero.getAttack() + hero.getDefense() + hero.getSpeed();
+        sb.append("<h3>Final Attributes</h3>");
+        sb.append("<p class='hero-desc' style='font-size: 0.9em;'>").append(hero.getDescription()).append("</p>");
+        
+        // Stat Bars
+        addStatBar(sb, "ATTACK", finalAttack, 70, "atk-fill");
+        addStatBar(sb, "DEFENSE", finalDefense, 70, "def-fill");
+        addStatBar(sb, "SPEED", finalSpeed, 70, "spd-fill");
+        
+        // Combat logic
+        int heroScore = finalAttack + finalDefense + finalSpeed;
         int enemyScore = enemy.attack + enemy.defense + enemy.speed;
         
         if (heroScore >= enemyScore) {
-            sb.append("<p style='color: green; font-size: 18px; font-weight: bold;'>¡VICTORIA! Ragnar ha derrotado al ").append(enemy.name).append(".</p>");
+            sb.append("<div class='combat-msg msg-victory'>VICTORY: Ragnar has triumphed!</div>");
         } else {
-            sb.append("<p style='color: red; font-size: 18px; font-weight: bold;'>Ragnar ha sido derrotado por el ").append(enemy.name).append("...</p>");
+            sb.append("<div class='combat-msg msg-defeat'>DEFEAT: Ragnar has fallen...</div>");
         }
 
         return sb.toString();
+    }
+
+    private static void addStatBar(StringBuilder sb, String label, int current, int max, String cssClass) {
+        int percent = Math.min(100, (current * 100) / max);
+        sb.append("<div class='stat-bar-container'>");
+        sb.append("<div class='stat-label'><span>").append(label).append("</span><span>").append(current).append("</span></div>");
+        sb.append("<div class='stat-bar'><div class='stat-fill ").append(cssClass).append("' style='width: ").append(percent).append("%;'></div></div>");
+        sb.append("</div>");
     }
 }
